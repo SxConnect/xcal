@@ -1,17 +1,32 @@
-version: "3.8"
+version: '3.8'
 
 services:
   infycal_app:
     build:
-      context: .
+      context: /root/xcal/xcal
       dockerfile: Dockerfile
+    image: infycal_app_image
     container_name: infycal_app
+    restart: unless-stopped
+    working_dir: /var/www/html
     volumes:
-      - ./src:/var/www/html
-    depends_on:
-      - infycal_db
+      - /root/xcal/xcal/src:/var/www/html
     networks:
-      - infycal
+      - infycal_net
+
+  infycal_nginx:
+    image: nginx:alpine
+    container_name: infycal_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - /root/xcal/xcal/src:/var/www/html
+      - /root/xcal/xcal/nginx:/etc/nginx/conf.d
+    depends_on:
+      - infycal_app
+    networks:
+      - infycal_net
 
   infycal_db:
     image: mysql:5.7
@@ -20,28 +35,16 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: laravel
-      MYSQL_USER: infycal
-      MYSQL_PASSWORD: 1Zllrvr1lt2U
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: laravel
     volumes:
-      - db_data:/var/lib/mysql
+      - infycal_db_data:/var/lib/mysql
     networks:
-      - infycal
-
-  infycal_nginx:
-    image: nginx:latest
-    container_name: infycal_nginx
-    ports:
-      - "8180:80"
-    volumes:
-      - ./src:/var/www/html
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - infycal_app
-    networks:
-      - infycal
+      - infycal_net
 
 volumes:
-  db_data:
+  infycal_db_data:
 
 networks:
-  infycal:
+  infycal_net:
+    driver: bridge
