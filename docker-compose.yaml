@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  infycal_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: infycal_app
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - infycal_db
+    networks:
+      - infycal
+
+  infycal_db:
+    image: mysql:5.7
+    container_name: infycal_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: infycal
+      MYSQL_PASSWORD: 1Zllrvr1lt2U
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - infycal
+
+  infycal_nginx:
+    image: nginx:latest
+    container_name: infycal_nginx
+    ports:
+      - "8180:80"
+    volumes:
+      - ./src:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - infycal_app
+    networks:
+      - infycal
+
+volumes:
+  db_data:
+
+networks:
+  infycal:
